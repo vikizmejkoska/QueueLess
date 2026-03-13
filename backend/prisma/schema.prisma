@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+}
+
+enum TicketStatus {
+  waiting
+  in_progress
+  done
+  cancelled
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(ADMIN)
+  salonId   Int
+  salon     Salon    @relation(fields: [salonId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Salon {
+  id           Int       @id @default(autoincrement())
+  name         String
+  address      String
+  city         String
+  phone        String
+  workingHours String
+  createdAt    DateTime  @default(now())
+
+  services     Service[]
+  tickets      Ticket[]
+  users        User[]
+}
+
+model Service {
+  id              Int       @id @default(autoincrement())
+  name            String
+  description     String
+  durationMinutes Int
+  price           Float
+  isActive        Boolean   @default(true)
+  salonId         Int
+  salon           Salon     @relation(fields: [salonId], references: [id])
+  createdAt       DateTime  @default(now())
+
+  tickets         Ticket[]
+}
+
+model Ticket {
+  id                   Int          @id @default(autoincrement())
+  ticketNumber         String       @unique
+  customerName         String
+  customerPhone        String
+  status               TicketStatus @default(waiting)
+  estimatedWaitMinutes Int          @default(0)
+  salonId              Int
+  serviceId            Int
+  salon                Salon        @relation(fields: [salonId], references: [id])
+  service              Service      @relation(fields: [serviceId], references: [id])
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  startedAt            DateTime?
+  completedAt          DateTime?
+}
